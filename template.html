@@ -1,206 +1,195 @@
 <html>
-<head>
-  <meta name="viewport" content="width=320, initial-scale=1">
-  <title>Chat</title>
+  <head>
+    <meta charset="utf-8">
+    <meta name="robots" content="noindex">
+    <title>Bootstrap Chat Box - Bootsnipp.com</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+    <style media="screen">
+      body {
+        overflow: hidden;
+        background-image: url(http://www.mirrordaily.com/wp-content/uploads/2015/07/watson-ibm.jpg);
+        background-size: 33%;
+      }
+      .chat-area {
+        float: left;
+        height: 80%;
+        overflow-x: hidden;
+        overflow-y: auto;
+        width: 100%;
+        background-color: #fff;
+      }
+      .chat-area li {
+        padding: 14px 14px 0;
+      }
+      .chat-area li::after {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        border: 0;
+        border-top: 1px solid #eee;
+      }
+      .chat-area li .chat-img img {
+        height: 40px;
+        width: 40px;
+      }
+      .chat-area .chat-body.left {
+        margin-left: 50px;
+      }
+      .chat-area .chat-body.right {
+        margin-right: 50px;
+      }
+      .chat-body p {
+        background: #fbf9fa none repeat scroll 0 0;
+        padding: 10px;
+      }
+      .chat-img {
+        /*padding-top: 10px;*/
+      }
+      .chat-img img {
+        height: 34px;
+        width: 34px;
+      }
+      .chat-time {
+        font-size: 8pt;
+      }
+      .chat-area .chat_reply .chat-body {
+        margin-left: 0;
+        margin-right: 50px;
+      }
+      .chat-area li:last-child {
+        padding-bottom: 10px;
+      }
+
+      .message_write {
+        background: #f5f3f3 none repeat scroll 0 0;
+        float: left;
+        padding: 15px;
+        width: 100%;
+        height: 100%;
+      }
+
+      .message_write textarea.form-control {
+        height: 70px;
+        padding: 10px;
+      }
+      .chat_bottom {
+        float: left;
+        margin-top: 13px;
+        width: 100%;
+      }
+      .upload_btn {
+        color: #777777;
+      }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/moment.min.js" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.17.1/locale/id.js" charset="utf-8"></script>
     <script type="text/javascript">
-	  var wsUri, ws;
-    function connect() {
-        wsUri = "wss://{{req.headers.host}}/ws/chat";
-        ws    = new WebSocket(wsUri);
+    var wsUri, ws;
+  	function connect() {
+      wsUri = "wss://{{req.headers.host}}/ws/chat";
+      ws    = new WebSocket(wsUri);
 
-        function createSystemMessage(message) {
-          var message = document.createTextNode(message);
+      function createUserMessage(user, message, right) {
+        var user    = document.createTextNode(user + " | " + moment().format('HH:mm:ss a'));
+        var message = document.createTextNode(message);
 
-          var messageBox = document.createElement('p');
-          messageBox.className = 'system';
+        var userImg = document.createElement('img');
+        userImg.setAttribute('class','img-circle');
+        userImg.setAttribute('alt','User Avatar')
+        if(!right) userImg.setAttribute('src','http://placehold.it/100/f00/fff.jpg?text=C');
+        else userImg.setAttribute('src','http://placehold.it/100/00f/fff.jpg?text=S');
 
-          messageBox.appendChild(message);
+        var chatImg = document.createElement('span');
+        if(!right) chatImg.setAttribute('class','chat-img pull-left');
+        else chatImg.setAttribute('class','chat-img pull-right');
+        chatImg.appendChild(userImg);
 
-          var chat = document.getElementById('chat_box');
-          chat.appendChild(messageBox);
-        }
+        var msgTxt  = document.createElement('p');
+        msgTxt.appendChild(message);
 
-        function createUserMessage(user, message) {
-          var user = document.createTextNode(user + ': ');
+        var msgTime = document.createElement('div');
+        if(!right) msgTime.setAttribute('class','chat-time pull-right');
+        else msgTime.setAttribute('class','chat-time pull-left');
+        msgTime.appendChild(user);
 
-          var userBox = document.createElement('span');
-          userBox.className = 'username';
-          userBox.appendChild(user);
+        var msgBox  = document.createElement('div');
+        if(!right) msgBox.setAttribute('class','chat-body left clearfix');
+        else msgBox.setAttribute('class','chat-body right clearfix');
+        msgBox.appendChild(msgTxt);
+        msgBox.appendChild(msgTime);
 
-          var message = document.createTextNode(message);
+        var chatBox = document.createElement('li');
+        chatBox.setAttribute('class','left clearfix');
+        chatBox.appendChild(chatImg);
+        chatBox.appendChild(msgBox);
 
-          var messageBox = document.createElement('p');
-          messageBox.appendChild(userBox);
-          messageBox.appendChild(message);
+        var chatArea = document.querySelector('.chat-area');
+        var chatList = document.querySelector('ul');
+        chatList.appendChild(chatBox);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }
 
-          var chat = document.getElementById('chat_box');
-          chat.appendChild(messageBox);
-        }
+      ws.onopen = function(ev) {
+        // createSystemMessage('[Connected]');
+        console.log('[Connected]');
+      };
 
-        ws.onopen = function(ev) {
-          createSystemMessage('[Connected]');
-        };
+      ws.onclose = function(ev) {
+        // createSystemMessage('[Disconnected]');
+        console.log('[Disconnected]');
+  		  setTimeout(function() {
+  		    // createSystemMessage('[Reconnecting]');
+  		    console.log('[Reconnecting]');
+  		    connect();
+  		  }, 1000)
+      }
 
-        ws.onclose = function(ev) {
-          createSystemMessage('[Disconnected]');
-      setTimeout(function() {
-        createSystemMessage('[Reconnecting]');
-        connect();
-      }, 1000)
-        }
+      ws.onmessage = function(ev) {
+        var payload = JSON.parse(ev.data);
+        createUserMessage(payload.user, payload.message, !(payload.user=="Client"));
+        console.log(payload);
+      }
 
-        ws.onmessage = function(ev) {
-          var payload = JSON.parse(ev.data);
-          createUserMessage(payload.user, payload.message);
-
-          var chat = document.getElementById('chat_box');
-          chat.scrollTop = chat.scrollHeight;
-        }
-    }
-
+	  } // end of connect()
     connect();
+
     function sendMessage() {
-        var user = document.getElementById('user');
+        var userName = "Client"; //document.getElementById('user');
         var message = document.getElementById('message');
-    
+        // createUserMessage(user, message.value)
         var payload = {
-          message: message.value,
-          user: user.value,
+          message: message.value.trim(),
+          user: userName,
           ts: (new Date()).getTime()
         };
-    
+
         ws.send(JSON.stringify(payload));
         message.value = "";
     };
-    
+
     function enterMsg(event) {
+      if(document.getElementById("quickMsg").checked){
         event.preventDefault();
         if (event.keyCode == 13) sendMessage();
+      }
     };
     </script>
-    <style type="text/css">
-      * {
-        font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
-        font-style: italic;
-        font-size: 24px;
-      }
-    
-      html, body, #wrapper {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-      }
-    
-      #wrapper {
-        background-color: #ecf0f1;
-      }
-    
-      #chat_box {
-        box-sizing: border-box;
-        height: 100%;
-        overflow: auto;
-        padding-bottom: 50px;
-      }
-    
-      #footer {
-        box-sizing: border-box;
-        position: fixed;
-        bottom: 0;
-        height: 50px;
-        width: 100%;
-        background-color: #2980b9;
-      }
-    
-      #footer .content {
-        padding-top: 4px;
-        position: relative;
-      }
-    
-      #user { width: 20%; }
-      #message { width: 68%; }
-      #send_btn {
-        width: 10%;
-        position: absolute;
-        right: 0;
-        bottom: 0;
-        margin: 0;
-      }
-    
-      .content {
-        width: 70%;
-        margin: 0 auto;
-      }
-    
-      input[type="text"],
-      input[type="button"] {
-        border: 0;
-        color: #fff;
-      }
-    
-      input[type="text"] {
-        background-color: #146EA8;
-        padding: 3px 10px;
-      }
-    
-      input[type="button"] {
-        background-color: #f39c12;
-        border-right: 2px solid #e67e22;
-        border-bottom: 2px solid #e67e22;
-        min-width: 70px;
-        display: inline-block;
-      }
-    
-      input[type="button"]:hover {
-        background-color: #e67e22;
-        border-right: 2px solid #f39c12;
-        border-bottom: 2px solid #f39c12;
-        cursor: pointer;
-      }
-    
-      .system,
-      .username {
-        color: #aaa;
-        font-style: italic;
-        font-family: monospace;
-        font-size: 16px;
-      }
-    
-      @media(max-width: 1000px) {
-        .content { width: 90%; }
-      }
-    
-      @media(max-width: 780px) {
-        #footer { height: 91px; }
-        #chat_box { padding-bottom: 91px; }
-    
-        #user { width: 100%; }
-        #message { width: 80%; }
-      }
-    
-      @media(max-width: 400px) {
-        #footer { height: 135px; }
-        #chat_box { padding-bottom: 135px; }
-    
-        #message { width: 100%; }
-        #send_btn {
-          position: relative;
-          margin-top: 3px;
-          width: 100%;
-        }
-      }
-    </style>
-</head>
-
-<body>
-  <div id="wrapper">
-    <div id="chat_box" class="content"></div>
-    <div id="footer">
-      <div class="content">
-        <input type="text" id="user" placeholder="Who are you?" />
-        <input type="text" id="message" placeholder="What do you want to say?" onkeyup="enterMsg(event)" />
-        <input type="button" id="send_btn" value="Send" onclick="sendMessage()">
+   </head>
+  <body>
+    <div class="row">
+      <div class="col col-lg-offset-4 col-lg-4 col-md-offset-4 col-md-6 col-sm-12">
+        <div class="chat-area">
+          <ul class="list-unstyled"></ul>
+        </div>
+        <div class="message_write">
+          <textarea id="message" class="form-control" placeholder="type a message" onkeyup="enterMsg(event)"></textarea>
+          <div class="clearfix"></div>
+          <div class="chat_bottom">
+            <input type="checkbox" id="quickMsg" checked="checked"> Enter to Send Message
+            <a href="#" id="send_btn" class="pull-right btn btn-success" onclick="sendMessage()">Send</a>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</body>
+  </body>
 </html>

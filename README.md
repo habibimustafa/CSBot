@@ -7,6 +7,10 @@ Customer Service Bot using IBM Bluemix Watson Conversation and Node-RED
 - Connect Watson Conversation to Node-RED Starter
 - Import customerservice.json to your Node-Red Starter Project 
 
+# Demo
+- http://smschatbot.mybluemix.net/chat
+- https://customerservicebot.mybluemix.net/chat
+
 # Reference
 - https://www.ibm.com/watson/developercloud/doc/conversation/index.html
 - https://www.ibm.com/developerworks/cloud/library/cl-rtchat-app/
